@@ -13,7 +13,7 @@ uint16_t modb_db[0x100];
 void usb_OnDataReceived(void)
 {
     if(rx_buf[0]!=MODB_ADDR) return;
-
+    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,1);
     //add crc check here
     uint16_t reg_addr = (rx_buf[2]<<8) | rx_buf[3];
     uint16_t payload_len = (rx_buf[4]<<8) | rx_buf[5];
@@ -56,6 +56,8 @@ void usb_OnDataReceived(void)
     tx_buf[rsp_len+1]=crc>>8;
     // HAL_UART_Transmit_DMA(&huart1,tx_buf,rsp_len+2);
     CDC_Transmit_FS(tx_buf, rsp_len+2);
+    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,0);
+
 }
 
 void USB_CDC_RxHandler(uint8_t* rx_buf_cdc, uint32_t len)
