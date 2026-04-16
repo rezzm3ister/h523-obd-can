@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>h523_template</name>
+	<name>h523-obd-can</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -35,7 +35,13 @@
 		<link>
 			<name>linked_files/lib_modbus.c</name>
 			<type>1</type>
-			<locationURI>PROJECT_LOC/libs/lib-modbus/lib_modbus.c</locationURI>
+			<locationURI>copy_PROJECT_LOC/libs/lib-modbus/lib_modbus.c</locationURI>
 		</link>
 	</linkedResources>
+	<variableList>
+		<variable>
+			<name>copy_PROJECT_LOC</name>
+			<value>file:/M:/ST/projects/h523-obd-can</value>
+		</variable>
+	</variableList>
 </projectDescription>
