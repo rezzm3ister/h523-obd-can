@@ -97,6 +97,7 @@ int main(void)
   MX_USB_PCD_Init();
   MX_ADC1_Init();
   MX_FDCAN1_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   custom_init();
 //    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,1);

@@ -10,7 +10,7 @@ bool one_sec_flag = false;
 
 void timing_loop(void)
 {
-    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,1);
+    // HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,1);
     can_timingloop();
     if(t1<=10000)
     {
@@ -21,12 +21,13 @@ void timing_loop(void)
         t1 = 0;
         one_sec_flag = true;
     }
-    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,0);
+    // HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,0);
 
 }
 
 void custom_init(void)
 {
+    HAL_TIM_Base_Start_IT(&htim6);
     HAL_TIM_Base_Start_IT(&htim7);
     MX_USB_Device_Init();
     can_Init();
