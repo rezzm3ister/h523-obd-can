@@ -8,7 +8,7 @@ uint16_t rx_len;
 uint8_t tx_buf[300];
 bool has_rx=0;
 
-uint16_t modb_db[0x100];
+uint16_t modb_db[MODB_SIZE];
 
 void usb_OnDataReceived(void)
 {

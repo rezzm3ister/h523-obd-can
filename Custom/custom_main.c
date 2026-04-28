@@ -56,4 +56,5 @@ void mainloop(void)
     }
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,led_en);
     usb_mainloop();
+    can_mainloop();
 }
