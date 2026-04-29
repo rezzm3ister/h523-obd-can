@@ -7,10 +7,18 @@
 
 static uint32_t t1 = 0;
 bool one_sec_flag = false;
+static uint32_t tick10k = 0;
 
+uint32_t Get10kTick(void)
+{
+    return tick10k;
+}
+
+//10khz timing
 void timing_loop(void)
 {
-    // HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,1);
+    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,1);
+    tick10k++;
     can_timingloop();
     if(t1<=10000)
     {
@@ -21,7 +29,7 @@ void timing_loop(void)
         t1 = 0;
         one_sec_flag = true;
     }
-    // HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,0);
+    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,0);
 
 }
 

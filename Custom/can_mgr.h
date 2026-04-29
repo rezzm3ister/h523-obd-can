@@ -4,7 +4,7 @@
 #include "includes.h"
 
 #define CAN_WAKEUP_TIME 30000
-#define CAN_TIMEOUT 150
+#define CAN_TIMEOUT 200
 #define CAN_STARTUP_TIMEOUT 1000
 #define CAN_MAX_PID 0x60
 #define CAN_PID_COUNT_FAST 5
@@ -27,7 +27,7 @@ typedef struct
 {
     uint16_t target_addr;
     uint8_t obd_mode;
-    uint8_t pid;
+    uint16_t pid;
     uint32_t raw_value;
     uint16_t conv_value;
     uint16_t (*conv_func)(uint32_t);

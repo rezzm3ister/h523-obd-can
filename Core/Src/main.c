@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "fdcan.h"
 #include "gpdma.h"
+#include "i2c.h"
 #include "memorymap.h"
 #include "tim.h"
 #include "usb.h"
@@ -98,6 +99,7 @@ int main(void)
   MX_ADC1_Init();
   MX_FDCAN1_Init();
   MX_TIM6_Init();
+  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
   custom_init();
 //    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,1);
