@@ -7,8 +7,8 @@
 #define CAN_TIMEOUT 200
 #define CAN_STARTUP_TIMEOUT 1000
 #define CAN_MAX_PID 0x60
-#define CAN_PID_COUNT_FAST 5
-#define CAN_PID_COUNT_SLOW 5
+#define CAN_PID_COUNT_FAST 10
+#define CAN_PID_COUNT_SLOW 4
 
 typedef enum
 {
@@ -29,8 +29,10 @@ typedef struct
     uint8_t obd_mode;
     uint16_t pid;
     uint32_t raw_value;
-    uint16_t conv_value;
-    uint16_t (*conv_func)(uint32_t);
+    int16_t conv_value;
+    int16_t (*conv_func)(uint32_t);
+    bool is_special;
+    uint8_t special_addr;
 
 } can_obd_pid_t;
 

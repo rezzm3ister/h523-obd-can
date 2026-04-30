@@ -9,6 +9,11 @@
 #define MODB_ADDR 0x69
 #define MODB_SIZE 0x500
 extern uint16_t modb_db[MODB_SIZE];
+
+#define CAN_LOOPTIME modb_db[0x200]
+
+
+
 void USB_CDC_RxHandler(uint8_t* rx_buf_cdc, uint32_t len);
 
 void usb_mainloop(void);

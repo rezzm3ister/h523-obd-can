@@ -1,6 +1,7 @@
 #include "can_mgr.h"
 #include "usb_mgr.h"
 #include "fdcan.h"
+#include "can_conv_funcs.h"
 
 extern FDCAN_HandleTypeDef hfdcan1;
 
@@ -27,19 +28,23 @@ uint32_t testfunc1(uint32_t val)
 
 can_obd_pid_t can_pids_fast[CAN_PID_COUNT_FAST] =
 {
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 1, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 2, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 3, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 4, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 5, .conv_func = testfunc1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x06, .conv_func = can_ConvFuelTrim}, // fuel trim
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0B, .conv_func = can_ConvAbsoluteMAP},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0C, .conv_func = can_ConvertRPM},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0D, .conv_func = can_ConvVehicleSpeed},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0E, .conv_func = can_ConvTimingAdvance},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x11, .conv_func = can_ConvPercent}, //throttle position
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x34, .conv_func = can_ConvO2Group3}, //Lambda
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x3C, .conv_func = can_ConvTemp2}, //EGT
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x44, .conv_func = can_ConvTargetAFR}, //target AFR
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x44, .conv_func = can_ConvPercent}, //throttle%
 };
 can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] = 
 {
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 1, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 2, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 3, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 4, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 5, .conv_func = testfunc1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x05, .conv_func = can_ConvTemp1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0F, .conv_func = can_ConvTemp1},
+    {.target_addr = 0x7E0, .obd_mode = 0x22, .pid = 0x1310, .conv_func = can_ConvMazdaOilTemp, .is_special = 1, .special_addr =0x10},
+    {.target_addr = 0x7E1, .obd_mode = 0x22, .pid = 0x1E1C, .conv_func = can_ConvMazdaAtfTemp, .is_special = 1, .special_addr =0x11},
 };
 
 
@@ -157,7 +162,7 @@ void can_sendRequest(can_obd_pid_t *h)
 
 
 
-void can_onDataReceived(void)
+void can_onDataReceived(can_obd_pid_t *h)
 {
     // can_sendTestRequest();
 
@@ -197,34 +202,15 @@ void can_onDataReceived(void)
             val = 0;
             break;
     }
-
-    switch(can_state)
+    h->raw_value = val;
+    h->conv_value = h->conv_func(h->raw_value);
+    if(h->is_special)
     {
-        case CAN_PROCESSING:
-            // if(pid_table[pid_idx * PID_TABLE_COLS + 3] > 0)
-            // {
-            //     modb_db[pid_table[pid_idx * PID_TABLE_COLS + 3]] = val;
-            // }
-            // else
-            // {
-            //     modb_db[0x100+can_rx_data_buf[2]] = val & 0xFFFF; // Store the processed value in the modbus database
-            //     modb_db[0x200+can_rx_data_buf[2]] = val >> 16;
-            // }
-        break;
-        case CAN_PROCESSING_SLOW:
-            // if(pid_table_slow[pid_idx_slow * PID_TABLE_COLS + 3] > 0)
-
-            // {
-            //     if(val > 0xFF)
-            //     modb_db[pid_table_slow[pid_idx_slow * PID_TABLE_COLS + 3]] = val;
-            // }
-            // else
-            // {
-            //     modb_db[0x100+can_rx_data_buf[2]] = val & 0xFFFF; // Store the processed value in the modbus database
-            //     modb_db[0x200+can_rx_data_buf[2]] = val >> 16;
-            // }
-
-        break;
+        modb_db[0x100 + h->special_addr] = h->conv_value;
+    }
+    else
+    {
+        modb_db[h->pid] = h->conv_value;
     }
 }
 
@@ -290,7 +276,7 @@ void can_mainloop(void)
             }
         break;
         case CAN_PROCESSING:
-            can_onDataReceived();
+            can_onDataReceived(&can_pids_fast[pid_idx]);
             pid_idx++;
             can_state = CAN_WRITE;
             if(pid_idx >= CAN_PID_COUNT_FAST)
@@ -321,7 +307,7 @@ void can_mainloop(void)
             }
         break;
         case CAN_PROCESSING_SLOW:
-            can_onDataReceived();
+            can_onDataReceived(&can_pids_slow[pid_idx_slow]);
             pid_idx_slow++;
             if(pid_idx_slow >= CAN_PID_COUNT_SLOW)
             {
@@ -334,4 +320,5 @@ void can_mainloop(void)
         default:
         break;
     }
+    CAN_LOOPTIME = can_GetLoopTime();
 }
