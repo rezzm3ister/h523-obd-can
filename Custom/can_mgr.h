@@ -41,7 +41,7 @@ typedef struct
 #define PID_TABLE_COLS 4
 #define FAST_PID_COUNT 17
 void can_sendTestRequest(void);
-void can_onDataReceived(void);
+void can_onDataReceived(can_obd_pid_t *h);
 
 void can_Init(void);
 void can_timingloop(void);

@@ -37,7 +37,7 @@ can_obd_pid_t can_pids_fast[CAN_PID_COUNT_FAST] =
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x34, .conv_func = can_ConvO2Group3}, //Lambda
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x3C, .conv_func = can_ConvTemp2}, //EGT
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x44, .conv_func = can_ConvTargetAFR}, //target AFR
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x44, .conv_func = can_ConvPercent}, //throttle%
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x45, .conv_func = can_ConvPercent}, //throttle%
 };
 can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] = 
 {
@@ -171,6 +171,7 @@ void can_onDataReceived(can_obd_pid_t *h)
     uint8_t len = 0;
     uint8_t data[4];
     bool bad = 0;
+    //checks if its mode 1 or mode 22
     if(can_rx_data_buf[1] != 0x41)
     {
         len = can_rx_data_buf[0]-3;

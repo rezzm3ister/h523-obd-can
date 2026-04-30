@@ -2,7 +2,7 @@
 
 int16_t can_ConvPercent(uint32_t in)
 {
-    return (int16_t)(((float)in )/ (255.00 * 100 * 100));
+    return (int16_t)(((float)in /255) * 100 * 100);
 }
 
 //no conversion needed for absolute MAP
@@ -63,7 +63,7 @@ int16_t can_ConvTimingAdvance(uint32_t in)
 
 int16_t can_ConvTargetAFR(uint32_t in)
 {
-    return (int16_t)((((float)in)*2)/65536);
+    return (int16_t)((((float)in)*2)/65536*100);
 }
 
 
