@@ -35,11 +35,11 @@ can_obd_pid_t can_pids_fast[CAN_PID_COUNT_FAST] =
 };
 can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] = 
 {
-    {.target_addr = 0x7DF, .obd_mode = 2, .pid = 1, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 2, .pid = 2, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 2, .pid = 3, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 2, .pid = 4, .conv_func = testfunc1},
-    {.target_addr = 0x7DF, .obd_mode = 2, .pid = 5, .conv_func = testfunc1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 1, .conv_func = testfunc1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 2, .conv_func = testfunc1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 3, .conv_func = testfunc1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 4, .conv_func = testfunc1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 5, .conv_func = testfunc1},
 };
 
 
@@ -159,7 +159,7 @@ void can_sendRequest(can_obd_pid_t *h)
 
 void can_onDataReceived(void)
 {
-    can_sendTestRequest();
+    // can_sendTestRequest();
 
     volatile uint32_t val = 0;
     uint8_t bytes_following = 0;
@@ -290,7 +290,7 @@ void can_mainloop(void)
             }
         break;
         case CAN_PROCESSING:
-            //call on data received here
+            can_onDataReceived();
             pid_idx++;
             can_state = CAN_WRITE;
             if(pid_idx >= CAN_PID_COUNT_FAST)
@@ -321,7 +321,7 @@ void can_mainloop(void)
             }
         break;
         case CAN_PROCESSING_SLOW:
-            //on data received here
+            can_onDataReceived();
             pid_idx_slow++;
             if(pid_idx_slow >= CAN_PID_COUNT_SLOW)
             {
