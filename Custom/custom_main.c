@@ -4,6 +4,7 @@
 #include "usb_mgr.h"
 #include "can_mgr.h"
 #include "analog_mgr.h"
+#include "adxl_mgr.h"
 
 static uint32_t t1 = 0;
 bool one_sec_flag = false;
@@ -40,6 +41,7 @@ void custom_init(void)
     MX_USB_Device_Init();
     can_Init();
     analog_init();
+    adxl_init();
     // HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,1);
 
 }
@@ -65,4 +67,22 @@ void mainloop(void)
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,led_en);
     usb_mainloop();
     can_mainloop();
+    adxl_mainloop();
 }
+
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *h)
+{
+    if(h->Instance == I2C3)
+    {
+        adxl_MemRxCpltCallback();
+    }
+}
+
+void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *h)
+{
+    if(h->Instance == I2C3)
+    {
+        adxl_MemTxCpltCallback();
+    }
+}
+

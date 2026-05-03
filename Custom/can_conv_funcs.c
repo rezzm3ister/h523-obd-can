@@ -76,7 +76,7 @@ int16_t can_ConvMazdaOilTemp(uint32_t in)
 
 int16_t can_ConvMazdaAtfTemp(uint32_t in)
 {
-    return (int16_t)(((float)in)/16);
+    return (int16_t)((((float)in)/16)*10);
 }
 
 //the rest to follow

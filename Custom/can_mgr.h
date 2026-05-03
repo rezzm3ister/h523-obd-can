@@ -8,7 +8,7 @@
 #define CAN_STARTUP_TIMEOUT 1000
 #define CAN_MAX_PID 0x60
 #define CAN_PID_COUNT_FAST 10
-#define CAN_PID_COUNT_SLOW 4
+#define CAN_PID_COUNT_SLOW 5
 
 typedef enum
 {

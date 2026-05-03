@@ -28,6 +28,7 @@ uint32_t testfunc1(uint32_t val)
 
 can_obd_pid_t can_pids_fast[CAN_PID_COUNT_FAST] =
 {
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x04, .conv_func = can_ConvPercent}, // fuel trim
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x06, .conv_func = can_ConvFuelTrim}, // fuel trim
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0B, .conv_func = can_ConvAbsoluteMAP},
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0C, .conv_func = can_ConvertRPM},
@@ -43,6 +44,7 @@ can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] =
 {
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x05, .conv_func = can_ConvTemp1},
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0F, .conv_func = can_ConvTemp1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x2F, .conv_func = can_ConvPercent},
     {.target_addr = 0x7E0, .obd_mode = 0x22, .pid = 0x1310, .conv_func = can_ConvMazdaOilTemp, .is_special = 1, .special_addr =0x10},
     {.target_addr = 0x7E1, .obd_mode = 0x22, .pid = 0x1E1C, .conv_func = can_ConvMazdaAtfTemp, .is_special = 1, .special_addr =0x11},
 };
