@@ -5,6 +5,7 @@
 #include "can_mgr.h"
 #include "analog_mgr.h"
 #include "adxl_mgr.h"
+#include "lcd_mgr.h"
 
 static uint32_t t1 = 0;
 bool one_sec_flag = false;
@@ -42,6 +43,7 @@ void custom_init(void)
     can_Init();
     analog_init();
     adxl_init();
+    lcd_init();
     // HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,1);
 
 }
@@ -68,6 +70,7 @@ void mainloop(void)
     usb_mainloop();
     can_mainloop();
     adxl_mainloop();
+    lcd_mainloop();
 }
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *h)
@@ -75,6 +78,22 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *h)
     if(h->Instance == I2C3)
     {
         adxl_MemRxCpltCallback();
+    }
+    else if(h->Instance == I2C2)
+    {
+        lcd_check_alive_rx();
+    }
+}
+
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *h)
+{
+    if(h->Instance == I2C2)
+    {
+        if(lcd_GetLcdState() == LCD_STATE_OFF)
+        {
+            lcd_check_alive_rx();
+        }
+        
     }
 }
 
@@ -85,4 +104,13 @@ void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *h)
         adxl_MemTxCpltCallback();
     }
 }
+
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *h)
+{
+    if(h->Instance == I2C2)
+    {
+        lcd_OnDataTransmit();
+    }
+}
+
 
