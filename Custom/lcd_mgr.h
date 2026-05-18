@@ -21,7 +21,7 @@ typedef struct
     uint8_t tx_send_idx;
     bool tx_ongoing;
     bool prev_tx_ongoing;
-}i2c_queue_t;
+} i2c_queue_t;
 
 
 typedef enum
@@ -29,8 +29,15 @@ typedef enum
     LCD_STATE_OFF = 0,
     LCD_STATE_INIT,
     LCD_STATE_IDLE,
-    LCD_STATE_TX
+    LCD_STATE_TX,
+    LCD_STATE_TX_WAIT
 } lcd_state_t;
+
+typedef enum
+{
+    LCD_MODE_TUNER = 0,
+    LCD_MODE_NORMAL
+} lcd_mode_t;
 
 // typedef enum
 // {
@@ -41,6 +48,11 @@ lcd_state_t lcd_GetLcdState(void);
 void lcd_check_alive_rx(void);
 
 void lcd_OnDataTransmit(void);
+
+void lcd_queue_cmd(char data);
+void lcd_send_data (char data);
+void lcd_put_cur(int row, int col);
+void lcd_send_string (uint8_t* data, uint8_t len);
 
 void lcd_init(void);
 

@@ -67,6 +67,7 @@ void mainloop(void)
         can_1sloop();
     }
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,led_en);
+    gpio_mainloop();
     usb_mainloop();
     can_mainloop();
     adxl_mainloop();

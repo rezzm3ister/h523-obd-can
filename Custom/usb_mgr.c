@@ -1,5 +1,7 @@
 #include "usb_mgr.h"
 #include "lib_modbus.h"
+#include "can_mgr.h"
+
 
 uint8_t TxBuffer[] = "Hello World! From STM32 USB CDC Device To Virtual COM Port\r\n";
 uint8_t TxBufferLen = sizeof(TxBuffer);
@@ -77,4 +79,7 @@ void usb_mainloop(void)
         has_rx=0;
         usb_OnDataReceived();
     }
+    CAN_LOOPTIME = can_GetLoopTime();
+    modb_db[0x201] = can_GetSlowTimeouts();
+    modb_db[0x202] = can_GetFastTimeouts();
 }

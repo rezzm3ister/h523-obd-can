@@ -20,6 +20,8 @@ uint8_t pid_idx_slow=0;
 //loop durations
 static uint32_t can_loop_time = 0;
 
+static uint32_t can_intermessage_timer = 0;
+
 uint8_t pid_max_prio[2]; // 2 prio levels: high/low (0/1)
 uint32_t testfunc1(uint32_t val)
 {
@@ -28,25 +30,30 @@ uint32_t testfunc1(uint32_t val)
 
 can_obd_pid_t can_pids_fast[CAN_PID_COUNT_FAST] =
 {
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x04, .conv_func = can_ConvPercent}, // fuel trim
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x06, .conv_func = can_ConvFuelTrim}, // fuel trim
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0B, .conv_func = can_ConvAbsoluteMAP},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0C, .conv_func = can_ConvertRPM},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0D, .conv_func = can_ConvVehicleSpeed},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0E, .conv_func = can_ConvTimingAdvance},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x11, .conv_func = can_ConvPercent}, //throttle position
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x34, .conv_func = can_ConvO2Group3}, //Lambda
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x3C, .conv_func = can_ConvTemp2}, //EGT
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x44, .conv_func = can_ConvTargetAFR}, //target AFR
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x45, .conv_func = can_ConvPercent}, //throttle%
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x04, .conv_func = can_ConvPercent, .conv_multiplier = 100}, // fuel trim
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x06, .conv_func = can_ConvFuelTrim, .conv_multiplier = 100}, // fuel trim
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0B, .conv_func = can_ConvAbsoluteMAP, .conv_multiplier = 1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0C, .conv_func = can_ConvertRPM, .conv_multiplier = 1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0D, .conv_func = can_ConvVehicleSpeed, .conv_multiplier = 1},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0E, .conv_func = can_ConvTimingAdvance, .conv_multiplier = 100},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x11, .conv_func = can_ConvPercent, .conv_multiplier = 100}, //throttle position
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x34, .conv_func = can_ConvO2Group3, .conv_multiplier = 1000}, //Lambda
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x3C, .conv_func = can_ConvTemp2, .conv_multiplier = 1}, //EGT
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x44, .conv_func = can_ConvTargetAFR, .conv_multiplier = 100}, //target AFR
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x45, .conv_func = can_ConvPercent, .conv_multiplier = 100}, //throttle%
 };
 can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] = 
 {
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x05, .conv_func = can_ConvTemp1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0F, .conv_func = can_ConvTemp1},
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x2F, .conv_func = can_ConvPercent},
-    {.target_addr = 0x7E0, .obd_mode = 0x22, .pid = 0x1310, .conv_func = can_ConvMazdaOilTemp, .is_special = 1, .special_addr =0x10},
-    {.target_addr = 0x7E1, .obd_mode = 0x22, .pid = 0x1E1C, .conv_func = can_ConvMazdaAtfTemp, .is_special = 1, .special_addr =0x11},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x05, .conv_func = can_ConvTemp1, .conv_multiplier = 100},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0F, .conv_func = can_ConvTemp1, .conv_multiplier = 100},
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x2F, .conv_func = can_ConvPercent, .conv_multiplier = 100},
+    #ifdef MAZDA
+    {.target_addr = 0x7E0, .obd_mode = 0x22, .pid = 0x1310, .conv_func = can_ConvMazdaOilTemp, .is_special = 1, .special_addr =0x10, .conv_multiplier = 10},
+    {.target_addr = 0x7E1, .obd_mode = 0x22, .pid = 0x1E1C, .conv_func = can_ConvMazdaAtfTemp, .is_special = 1, .special_addr =0x11, .conv_multiplier = 10},
+    #else
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x5C, .conv_func = can_ConvTemp1},
+
+    #endif
 };
 
 
@@ -59,11 +66,231 @@ static uint32_t can_slow_timeouts = 0;
 
 static uint32_t last_loop_start = 0;
 
+uint32_t can_GetSlowTimeouts(void)
+{
+    return can_slow_timeouts;
+}
+uint32_t can_GetFastTimeouts(void)
+{
+    return can_fast_timeouts;
+}
 
 uint32_t can_GetLoopTime(void)
 {
     return can_loop_time;
 }
+
+// data getters
+uint32_t can_GetRawLoad(void)
+{
+    return can_pids_fast[IDX_ENGINE_LOAD].raw_value;
+}
+uint32_t can_GetLoadMultiplier(void)
+{
+    return can_pids_fast[IDX_ENGINE_LOAD].conv_multiplier;
+}
+int16_t can_GetActualLoad(void)
+{
+    return can_pids_fast[IDX_ENGINE_LOAD].conv_value;
+}
+uint32_t can_GetRawSTFT(void)
+{
+    return can_pids_fast[IDX_SHORT_TERM_FUEL_TRIM].raw_value;
+}
+uint32_t can_GetSTFTMultiplier(void)
+{
+    return can_pids_fast[IDX_SHORT_TERM_FUEL_TRIM].conv_multiplier;
+}
+int16_t can_GetActualSTFT(void)
+{
+    return can_pids_fast[IDX_SHORT_TERM_FUEL_TRIM].conv_value;
+}
+uint32_t can_GetRawMAP(void)
+{
+    return can_pids_fast[IDX_MAP].raw_value;
+}
+uint32_t can_GetMAPMultiplier(void)
+{
+    return can_pids_fast[IDX_MAP].conv_multiplier;
+}
+int16_t can_GetActualMAP(void)
+{
+    return can_pids_fast[IDX_MAP].conv_value;
+}
+uint32_t can_GetRawRPM(void)
+{
+    return can_pids_fast[IDX_RPM].raw_value;
+}
+uint32_t can_GetRPMMultiplier(void)
+{
+    return can_pids_fast[IDX_RPM].conv_multiplier;
+}
+int16_t can_GetActualRPM(void)
+{
+    return can_pids_fast[IDX_RPM].conv_value;
+}
+uint32_t can_GetRawSpeed(void)
+{
+    return can_pids_fast[IDX_SPEED].raw_value;
+}
+uint32_t can_GetSpeedMultiplier(void)
+{
+    return can_pids_fast[IDX_SPEED].conv_multiplier;
+}
+int16_t can_GetActualSpeed(void)
+{
+    return can_pids_fast[IDX_SPEED].conv_value;
+}
+uint32_t can_GetRawIgnAdv(void)
+{
+    return can_pids_fast[IDX_TIMING_ADV].raw_value;
+}
+uint32_t can_GetIgnAdvMultiplier(void)
+{
+    return can_pids_fast[IDX_TIMING_ADV].conv_multiplier;
+}
+int16_t can_GetActualIgnAdv(void)
+{
+    return can_pids_fast[IDX_TIMING_ADV].conv_value;
+}
+uint32_t can_GetRawTPS(void)
+{
+    return can_pids_fast[IDX_TPS].raw_value;
+}
+uint32_t can_GetTPSMultiplier(void)
+{
+    return can_pids_fast[IDX_TPS].conv_multiplier;
+}
+int16_t can_GetActualTPS(void)
+{
+    return can_pids_fast[IDX_TPS].conv_value;
+}
+uint32_t can_GetRawAFR(void)
+{
+    return can_pids_fast[IDX_TPS].raw_value;
+}
+uint32_t can_GetAFRMultiplier(void)
+{
+    return can_pids_fast[IDX_TPS].conv_multiplier;
+}
+int16_t can_GetActualAFR(void)
+{
+    return can_pids_fast[IDX_TPS].conv_value;
+}
+uint32_t can_GetRawEGT(void)
+{
+    return can_pids_fast[IDX_EGT].raw_value;
+}
+uint32_t can_GetEGTMultiplier(void)
+{
+    return can_pids_fast[IDX_EGT].conv_multiplier;
+}
+int16_t can_GetActualEGT(void)
+{
+    return can_pids_fast[IDX_EGT].conv_value;
+}
+uint32_t can_GetRawAFRTGT(void)
+{
+    return can_pids_fast[IDX_AFR_TGT].raw_value;
+}
+uint32_t can_GetAFRTGTMultiplier(void)
+{
+    return can_pids_fast[IDX_AFR_TGT].conv_multiplier;
+}
+int16_t can_GetActualAFRTGT(void)
+{
+    return can_pids_fast[IDX_AFR_TGT].conv_value;
+}
+uint32_t can_GetRawTPS2(void)
+{
+    return can_pids_fast[IDX_TPS_2].raw_value;
+}
+uint32_t can_GetTPS2Multiplier(void)
+{
+    return can_pids_fast[IDX_TPS_2].conv_multiplier;
+}
+int16_t can_GetActualTPS2(void)
+{
+    return can_pids_fast[IDX_TPS_2].conv_value;
+}
+uint32_t can_GetRawCLT(void)
+{
+    return can_pids_slow[IDX_CLT].raw_value;
+}
+uint32_t can_GetCLTMultiplier(void)
+{
+    return can_pids_slow[IDX_CLT].conv_multiplier;
+}
+int16_t can_GetActualCLT(void)
+{
+    return can_pids_slow[IDX_CLT].conv_value;
+}
+uint32_t can_GetRawIAT(void)
+{
+    return can_pids_slow[IDX_IAT].raw_value;
+}
+uint32_t can_GetIATMultiplier(void)
+{
+    return can_pids_slow[IDX_IAT].conv_multiplier;
+}
+int16_t can_GetActualIAT(void)
+{
+    return can_pids_slow[IDX_IAT].conv_value;
+}
+uint32_t can_GetRawFuelLevel(void)
+{
+    return can_pids_slow[IDX_FUEL_LVL].raw_value;
+}
+uint32_t can_GetFuelLevelMultiplier(void)
+{
+    return can_pids_slow[IDX_FUEL_LVL].conv_multiplier;
+}
+int16_t can_GetActualFuelLevel(void)
+{
+    return can_pids_slow[IDX_FUEL_LVL].conv_value;
+}
+#ifdef MAZDA
+uint32_t can_GetRawOilTemp(void)
+{
+    return can_pids_slow[IDX_MAZDA_OIL_TEMP].raw_value;
+}
+uint32_t can_GetOilTempMultiplier(void)
+{
+    return can_pids_slow[IDX_MAZDA_OIL_TEMP].conv_multiplier;
+}
+int16_t can_GetActualOilTemp(void)
+{
+    return can_pids_slow[IDX_MAZDA_OIL_TEMP].conv_value;
+}
+uint32_t can_GetRawAtfTemp(void)
+{
+    return can_pids_slow[IDX_MAZDA_ATF_TEMP].raw_value;
+}
+uint32_t can_GetAtfTempMultiplier(void)
+{
+    return can_pids_slow[IDX_MAZDA_ATF_TEMP].conv_multiplier;
+}
+int16_t can_GetActualAtfTemp(void)
+{
+    return can_pids_slow[IDX_MAZDA_ATF_TEMP].conv_value;
+}
+#else
+uint32_t can_GetRawOilTemp(void)
+{
+    return can_pids_slow[IDX_OIL_TEMP].raw_value;
+}
+uint32_t can_GetOilTempMultiplier(void)
+{
+    return can_pids_slow[IDX_OIL_TEMP].conv_multiplier;
+}
+int16_t can_GetActualOilTemp(void)
+{
+    return can_pids_slow[IDX_OIL_TEMP].conv_value;
+}
+
+#endif
+
+
 
 
 void can_sendTestRequest(void)
@@ -215,6 +442,7 @@ void can_onDataReceived(can_obd_pid_t *h)
     {
         modb_db[h->pid] = h->conv_value;
     }
+    can_intermessage_timer = Get10kTick();
 }
 
 void can_Init(void)
@@ -260,9 +488,13 @@ void can_mainloop(void)
             }
         break;
         case CAN_WRITE:
-            can_sendRequest(&can_pids_fast[pid_idx]);
-            can_write_timeout_timer = Get10kTick();
-            can_state = CAN_WAIT_RSP;
+            if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
+            {
+                can_sendRequest(&can_pids_fast[pid_idx]);
+                can_write_timeout_timer = Get10kTick();
+                can_state = CAN_WAIT_RSP;
+            }
+            
         break;
         case CAN_WAIT_RSP:
             if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
@@ -289,12 +521,15 @@ void can_mainloop(void)
             }
         break;
         case CAN_WRITE_SLOW:
-            can_sendRequest(&can_pids_slow[pid_idx_slow]);
-
-            can_loop_time = Get10kTick() - last_loop_start;
-            last_loop_start = Get10kTick();
-            can_write_timeout_timer = Get10kTick();
-            can_state = CAN_WAIT_RSP_SLOW;
+            if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
+            {
+                can_sendRequest(&can_pids_slow[pid_idx_slow]);
+                
+                can_loop_time = Get10kTick() - last_loop_start;
+                last_loop_start = Get10kTick();
+                can_write_timeout_timer = Get10kTick();
+                can_state = CAN_WAIT_RSP_SLOW;    
+            }
         break;
         case CAN_WAIT_RSP_SLOW:
             if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
@@ -323,5 +558,4 @@ void can_mainloop(void)
         default:
         break;
     }
-    CAN_LOOPTIME = can_GetLoopTime();
 }

@@ -63,6 +63,8 @@ void Error_Handler(void);
 #define DBG1_GPIO_Port GPIOB
 #define DGB2_Pin GPIO_PIN_1
 #define DGB2_GPIO_Port GPIOB
+#define LCD_MODE_Pin GPIO_PIN_2
+#define LCD_MODE_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
