@@ -6,7 +6,7 @@ uint16_t adc_data[NUM_ADCS];
 
 void analog_init(void)
 {
-    HAL_ADC_Start_DMA(&hadc1, &adc_data, NUM_ADCS);
+    HAL_ADC_Start_DMA(&hadc1, adc_data, NUM_ADCS);
 }
 
 void analog_mainloop(void)
