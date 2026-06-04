@@ -78,6 +78,8 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
       Error_Handler();
     }
 
+    /* Enable VDDUSB */
+    HAL_PWREx_EnableVddUSB();
     /* USB_DRD_FS clock enable */
     __HAL_RCC_USB_CLK_ENABLE();
 
