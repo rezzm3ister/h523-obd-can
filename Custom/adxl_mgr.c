@@ -51,6 +51,7 @@ void adxl_MemRxCpltCallback(void)
             modb_db[0x106] = (int16_t)(float_y * 1000);
             modb_db[0x107] = (int16_t)(float_z * 1000);
             modb_db[0x108] = (int16_t)(total_g * 1000);
+            modb_db[0x109] = (int16_t)((total_g-0.9) * 1000);
 
             adxl_state = ADXL_TX;
             adxl_isBusy = 0;
