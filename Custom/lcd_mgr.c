@@ -238,7 +238,7 @@ void lcd_mainloop(void)
             }
         break;
         case LCD_STATE_IDLE:
-            if((Get10kTick() - lcd_intermessage_timer > 6))
+            if((Get10kTick() - lcd_intermessage_timer > 10))
             {
                 if(lcd_send_queue_item(&lcd_queue))
                 {

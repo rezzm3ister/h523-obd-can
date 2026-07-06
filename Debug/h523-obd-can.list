@@ -5593,12 +5593,12 @@ void lcd_mainloop(void)
  80025d0:	b007      	add	sp, #28
  80025d2:	ecbd 8b02 	vpop	{d8}
  80025d6:	e8bd 8ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}
-            if((Get10kTick() - lcd_intermessage_timer > 6))
+            if((Get10kTick() - lcd_intermessage_timer > 10))
  80025da:	f7ff fe31 	bl	8002240 <Get10kTick>
  80025de:	4b1f      	ldr	r3, [pc, #124]	@ (800265c <lcd_mainloop+0xd8>)
  80025e0:	681b      	ldr	r3, [r3, #0]
  80025e2:	1ac0      	subs	r0, r0, r3
- 80025e4:	2806      	cmp	r0, #6
+ 80025e4:	280a      	cmp	r0, #10
  80025e6:	d9e8      	bls.n	80025ba <lcd_mainloop+0x36>
     if(q->queue_end_pos == 0)
  80025e8:	4d1d      	ldr	r5, [pc, #116]	@ (8002660 <lcd_mainloop+0xdc>)
