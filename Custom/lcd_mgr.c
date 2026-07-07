@@ -260,30 +260,30 @@ void lcd_mainloop(void)
 		{
 			case LCD_MODE_TUNER:
 				sprintf(lcd_q1,"AFR:");
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFR()) * can_GetAFRMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFR()) / can_GetAFRMultiplier());
 				memcpy(&lcd_q1[4],lcd_tmp_buf,4);
 				sprintf(lcd_q2,"TGT:");
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFRTGT()) * can_GetAFRTGTMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFRTGT()) / can_GetAFRTGTMultiplier());
 				memcpy(&lcd_q2[4],lcd_tmp_buf,4);
 				sprintf(lcd_q3,"IGN:");
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualIgnAdv()) * can_GetIgnAdvMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualIgnAdv()) / can_GetIgnAdvMultiplier());
 				memcpy(&lcd_q3[4],lcd_tmp_buf,4);
 				sprintf(lcd_q4,"IAT:");
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualIAT()) * can_GetIATMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualIAT()) / can_GetIATMultiplier());
 				memcpy(&lcd_q4[4],lcd_tmp_buf,4);
 				break;
 			case LCD_MODE_NORMAL: //specific to mazda for now
 				sprintf(lcd_q1,"AFR:");
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFR()) * can_GetAFRMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFR()) / can_GetAFRMultiplier());
 				memcpy(&lcd_q1[4],lcd_tmp_buf,4);
 				sprintf(lcd_q2,"TFT:");
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAtfTemp()) * can_GetAtfTempMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAtfTemp()) / can_GetAtfTempMultiplier());
 				memcpy(&lcd_q2[4],lcd_tmp_buf,4);
 				sprintf(lcd_q3,"CLT:");
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualCLT()) * can_GetCLTMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualCLT()) / can_GetCLTMultiplier());
 				memcpy(&lcd_q3[4],lcd_tmp_buf,4);
 				sprintf(lcd_q4,"EOT:");
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualOilTemp()) * can_GetOilTempMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualOilTemp()) / can_GetOilTempMultiplier());
 				memcpy(&lcd_q4[4],lcd_tmp_buf,4);
 
 				break;
