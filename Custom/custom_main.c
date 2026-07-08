@@ -6,6 +6,7 @@
 #include "analog_mgr.h"
 #include "adxl_mgr.h"
 #include "lcd_mgr.h"
+#include "gpio_mgr.h"
 
 static uint32_t t1 = 0;
 bool one_sec_flag = false;

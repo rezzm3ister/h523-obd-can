@@ -25,6 +25,9 @@ typedef enum
     ADXL_INIT_DONE
 } adxl_init_state_t;
 
+void adxl_MemRxCpltCallback(void);
+
+void adxl_MemTxCpltCallback(void);
 
 
 void adxl_init(void);

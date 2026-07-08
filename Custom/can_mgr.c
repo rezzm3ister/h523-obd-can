@@ -17,6 +17,7 @@ uint8_t can_rx_data_buf[8]; // Data buffer for CAN reception
 uint8_t pid_idx=0;
 uint8_t pid_idx_slow=0;
 
+bool has_data = false;
 //loop durations
 static uint32_t can_loop_time = 0;
 
@@ -28,7 +29,7 @@ uint32_t testfunc1(uint32_t val)
     return val;
 }
 
-can_obd_pid_t can_pids_fast[CAN_PID_COUNT_FAST] =
+volatile can_obd_pid_t can_pids_fast[CAN_PID_COUNT_FAST] =
 {
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x04, .conv_func = can_ConvPercent, .conv_multiplier = 100}, // fuel trim
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x06, .conv_func = can_ConvFuelTrim, .conv_multiplier = 100}, // fuel trim
@@ -37,12 +38,12 @@ can_obd_pid_t can_pids_fast[CAN_PID_COUNT_FAST] =
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0D, .conv_func = can_ConvVehicleSpeed, .conv_multiplier = 1},
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0E, .conv_func = can_ConvTimingAdvance, .conv_multiplier = 100},
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x11, .conv_func = can_ConvPercent, .conv_multiplier = 100}, //throttle position
-    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x34, .conv_func = can_ConvO2Group3, .conv_multiplier = 1000}, //Lambda
+    {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x34, .conv_func = can_ConvO2Group3, .conv_multiplier = 100}, //Lambda
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x3C, .conv_func = can_ConvTemp2, .conv_multiplier = 1}, //EGT
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x44, .conv_func = can_ConvTargetAFR, .conv_multiplier = 100}, //target AFR
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x45, .conv_func = can_ConvPercent, .conv_multiplier = 100}, //throttle%
 };
-can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] = 
+volatile can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] = 
 {
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x05, .conv_func = can_ConvTemp1, .conv_multiplier = 100},
     {.target_addr = 0x7DF, .obd_mode = 1, .pid = 0x0F, .conv_func = can_ConvTemp1, .conv_multiplier = 100},
@@ -167,15 +168,15 @@ int16_t can_GetActualTPS(void)
 }
 uint32_t can_GetRawAFR(void)
 {
-    return can_pids_fast[IDX_TPS].raw_value;
+    return can_pids_fast[IDX_AFR].raw_value;
 }
 uint32_t can_GetAFRMultiplier(void)
 {
-    return can_pids_fast[IDX_TPS].conv_multiplier;
+    return can_pids_fast[IDX_AFR].conv_multiplier;
 }
 int16_t can_GetActualAFR(void)
 {
-    return can_pids_fast[IDX_TPS].conv_value;
+    return can_pids_fast[IDX_AFR].conv_value;
 }
 uint32_t can_GetRawEGT(void)
 {
@@ -337,21 +338,21 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
     }
     memcpy(can_rx_data_buf,can_rx_data,8);
+    has_data = true;
+    // switch(can_state)
+    // {
+    //     case CAN_WAIT_RSP:
+    //         can_state = CAN_PROCESSING; // Set state to processing after receiving data
 
-    switch(can_state)
-    {
-        case CAN_WAIT_RSP:
-            can_state = CAN_PROCESSING; // Set state to processing after receiving data
+    //     break;
+    //     case CAN_WAIT_RSP_SLOW:
+    //         can_state = CAN_PROCESSING_SLOW; // Set state to processing after receiving data
 
-        break;
-        case CAN_WAIT_RSP_SLOW:
-            can_state = CAN_PROCESSING_SLOW; // Set state to processing after receiving data
-
-        break;
-        default:
-        return;
-        break;
-    }
+    //     break;
+    //     default:
+    //     return;
+    //     break;
+    // }
     
 
 }
@@ -403,14 +404,21 @@ void can_onDataReceived(can_obd_pid_t *h)
     //checks if its mode 1 or mode 22
     if(can_rx_data_buf[1] != 0x41)
     {
+        // if(can_rx_data_buf[2] != h->pid)
+        // {
+        //     return;
+        // }
         len = can_rx_data_buf[0]-3;
         memcpy(data, &can_rx_data_buf[4], 4);
     }
     else
     {
+        // if((can_rx_data_buf[2]<<8 | can_rx_data_buf[3]) != h->pid)
+        // {
+        //     return;
+        // }
         len = can_rx_data_buf[0]-2;
         memcpy(data, &can_rx_data_buf[3], 4);
-
     }
 
     switch(len)
@@ -430,10 +438,12 @@ void can_onDataReceived(can_obd_pid_t *h)
         default:
             // Handle unexpected length
             val = 0;
+            can_intermessage_timer = Get10kTick();
+            return;
             break;
     }
     h->raw_value = val;
-    h->conv_value = h->conv_func(h->raw_value);
+    h->conv_value = h->conv_func(val);
     if(h->is_special)
     {
         modb_db[0x100 + h->special_addr] = h->conv_value;
@@ -497,7 +507,12 @@ void can_mainloop(void)
             
         break;
         case CAN_WAIT_RSP:
-            if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
+            if(has_data)
+            {
+                can_state = CAN_PROCESSING;
+                has_data = false;
+            }
+            else if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
             {
                 // timeout stuff
                 pid_idx++;
@@ -532,7 +547,12 @@ void can_mainloop(void)
             }
         break;
         case CAN_WAIT_RSP_SLOW:
-            if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
+            if(has_data)
+            {
+                can_state = CAN_PROCESSING_SLOW;
+                has_data = false;
+            }
+            else if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
             {
                 // timeout stuff
                 pid_idx_slow++;
