@@ -424,21 +424,21 @@ void can_onDataReceived(can_obd_pid_t *h)
     switch(len)
     {
         case 1:
-            val = data[0];
+            val = (uint32_t)data[0];
             break;
         case 2:
-            val = (data[0] << 8) | data[1];
+            val = ((uint32_t)data[0] << 8) | (uint32_t)data[1];
             break;
         case 3:
-            val = (data[0] << 16) | (data[1] << 8) | data[2];
+            val = ((uint32_t)data[0] << 16) | ((uint32_t)data[1] << 8) | (uint32_t)data[2];
             break;
         case 4:
-            val = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
+            val = ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | (uint32_t)data[3];
             break;
         default:
             // Handle unexpected length
             val = 0;
-            can_intermessage_timer = Get10kTick();
+            // can_intermessage_timer = Get10kTick();
             return;
             break;
     }
@@ -498,12 +498,12 @@ void can_mainloop(void)
             }
         break;
         case CAN_WRITE:
-            if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
-            {
+            // if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
+            // {
                 can_sendRequest(&can_pids_fast[pid_idx]);
                 can_write_timeout_timer = Get10kTick();
                 can_state = CAN_WAIT_RSP;
-            }
+            // }
             
         break;
         case CAN_WAIT_RSP:
@@ -536,15 +536,15 @@ void can_mainloop(void)
             }
         break;
         case CAN_WRITE_SLOW:
-            if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
-            {
+            // if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
+            // {
                 can_sendRequest(&can_pids_slow[pid_idx_slow]);
                 
                 can_loop_time = Get10kTick() - last_loop_start;
                 last_loop_start = Get10kTick();
                 can_write_timeout_timer = Get10kTick();
                 can_state = CAN_WAIT_RSP_SLOW;    
-            }
+            // }
         break;
         case CAN_WAIT_RSP_SLOW:
             if(has_data)
