@@ -337,8 +337,12 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         // can_onDataReceived();
 
     }
-    memcpy(can_rx_data_buf,can_rx_data,8);
-    has_data = true;
+    if(!has_data)
+    {
+        memcpy(can_rx_data_buf,can_rx_data,8);
+        has_data = true;
+    }
+    
     // switch(can_state)
     // {
     //     case CAN_WAIT_RSP:
@@ -453,6 +457,8 @@ void can_onDataReceived(can_obd_pid_t *h)
         modb_db[h->pid] = h->conv_value;
     }
     can_intermessage_timer = Get10kTick();
+    has_data = false;
+
 }
 
 void can_Init(void)
@@ -498,19 +504,19 @@ void can_mainloop(void)
             }
         break;
         case CAN_WRITE:
-            // if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
-            // {
+            if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
+            {
                 can_sendRequest(&can_pids_fast[pid_idx]);
                 can_write_timeout_timer = Get10kTick();
                 can_state = CAN_WAIT_RSP;
-            // }
+            }
             
         break;
         case CAN_WAIT_RSP:
             if(has_data)
             {
                 can_state = CAN_PROCESSING;
-                has_data = false;
+                // has_data = false;
             }
             else if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
             {
