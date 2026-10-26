@@ -390,7 +390,12 @@ void can_sendRequest(can_obd_pid_t *h)
     }
     if(HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &can_tx_header, can_tx_data) !=0)
     {
-        Error_Handler();
+        // Error_Handler();
+        HAL_FDCAN_DeInit(&hfdcan1);
+        // __HAL_RCC_FDCAN_FORCE_RESET();
+        HAL_FDCAN_Init(&hfdcan1);
+        can_Init();
+
     }
 }
 
@@ -504,12 +509,12 @@ void can_mainloop(void)
             }
         break;
         case CAN_WRITE:
-            if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
-            {
+            // if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
+            // {
                 can_sendRequest(&can_pids_fast[pid_idx]);
                 can_write_timeout_timer = Get10kTick();
                 can_state = CAN_WAIT_RSP;
-            }
+            // }
             
         break;
         case CAN_WAIT_RSP:

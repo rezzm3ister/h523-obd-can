@@ -32,15 +32,15 @@ static uint8_t lcd_init_commands[NUM_LCD_INIT_STEPS] =
 
 static uint32_t lcd_init_command_delays[NUM_LCD_INIT_STEPS] =
 {
-    600,
-    600,
-    20,
-    200,
-    200,
-    60,
-    60,
-    200,
-    60,
+    1000,
+    1000,
+    100,
+    500,
+    500,
+    100,
+    100,
+    500,
+    100,
 };
 
 //timers
