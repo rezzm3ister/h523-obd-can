@@ -3,6 +3,7 @@
 #include "fdcan.h"
 #include "can_conv_funcs.h"
 
+#include "lib-timer.h"
 extern FDCAN_HandleTypeDef hfdcan1;
 
 can_state_t can_state = CAN_INIT; // Initial state of the CAN manager
@@ -59,7 +60,7 @@ volatile can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] =
 
 
 //timers
-static uint32_t can_startup_timer = 0;
+static HPTim_t can_startup_timer;
 static uint32_t can_write_timeout_timer = 0;
 
 static uint32_t can_fast_timeouts = 0;
@@ -468,6 +469,8 @@ void can_onDataReceived(can_obd_pid_t *h)
 
 void can_Init(void)
 {
+    HPTIM_INIT(&can_startup_timer);
+
     if(HAL_FDCAN_Start(&hfdcan1)!= HAL_OK)
     {
         Error_Handler();
@@ -499,11 +502,12 @@ void can_mainloop(void)
     switch(can_state)
     {
         case CAN_INIT:
-            can_startup_timer = Get10kTick();
+            hptim_start(&can_startup_timer, 30000);
             can_state = CAN_TURNON;
         break;
         case CAN_TURNON:
-            if(Get10kTick() - can_startup_timer >= 30000)
+            hptim_update(&can_startup_timer);
+            if(HPTIM_IS_EXPIRED(&can_startup_timer))
             {
                 can_state = CAN_WRITE;
             }

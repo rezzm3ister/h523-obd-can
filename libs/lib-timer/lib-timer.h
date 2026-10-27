@@ -28,6 +28,9 @@ typedef struct {
     (timer_ptr)->end_time = 0; \
     (timer_ptr)->status = HPTIM_OFF
 
+    
+#define HPTIM_IS_EXPIRED(timer_ptr) ((timer_ptr)->status == HPTIM_EXPIRED)
+
 // Function prototypes
 
 void hptim_start(HPTim_t *timer, uint32_t duration);
