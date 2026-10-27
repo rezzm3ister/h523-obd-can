@@ -5761,7 +5761,7 @@ void lcd_mainloop(void)
  8002732:	e893 0003 	ldmia.w	r3, {r0, r1}
  8002736:	7121      	strb	r1, [r4, #4]
  8002738:	6020      	str	r0, [r4, #0]
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFR()) / can_GetAFRMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFR()) / (float)can_GetAFRMultiplier());
  800273a:	f7ff fbed 	bl	8001f18 <can_GetActualAFR>
  800273e:	ee08 0a10 	vmov	s16, r0
  8002742:	f7ff fbe3 	bl	8001f0c <can_GetAFRMultiplier>
@@ -5790,7 +5790,7 @@ void lcd_mainloop(void)
 				sprintf(lcd_q2,"TFT:");
  800277a:	9604      	str	r6, [sp, #16]
  800277c:	6030      	str	r0, [r6, #0]
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAtfTemp()) / can_GetAtfTempMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAtfTemp()) / (float)can_GetAtfTempMultiplier());
  800277e:	f7ff fc0d 	bl	8001f9c <can_GetActualAtfTemp>
  8002782:	ee08 0a10 	vmov	s16, r0
  8002786:	f7ff fc03 	bl	8001f90 <can_GetAtfTempMultiplier>
@@ -5818,7 +5818,7 @@ void lcd_mainloop(void)
 				sprintf(lcd_q3,"CLT:");
  80027bc:	9705      	str	r7, [sp, #20]
  80027be:	6038      	str	r0, [r7, #0]
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualCLT()) / can_GetCLTMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualCLT()) / (float)can_GetCLTMultiplier());
  80027c0:	f7ff fbc6 	bl	8001f50 <can_GetActualCLT>
  80027c4:	ee08 0a10 	vmov	s16, r0
  80027c8:	f7ff fbbc 	bl	8001f44 <can_GetCLTMultiplier>
@@ -5846,7 +5846,7 @@ void lcd_mainloop(void)
  8002800:	7111      	strb	r1, [r2, #4]
 				memcpy(&lcd_q3[4],lcd_tmp_buf,4);
  8002802:	607b      	str	r3, [r7, #4]
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualOilTemp()) / can_GetOilTempMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualOilTemp()) / (float)can_GetOilTempMultiplier());
  8002804:	f7ff fbbc 	bl	8001f80 <can_GetActualOilTemp>
  8002808:	ee08 0a10 	vmov	s16, r0
  800280c:	f7ff fbb2 	bl	8001f74 <can_GetOilTempMultiplier>
@@ -7153,7 +7153,7 @@ void lcd_mainloop(void)
  80031c0:	e893 0003 	ldmia.w	r3, {r0, r1}
  80031c4:	7121      	strb	r1, [r4, #4]
  80031c6:	6020      	str	r0, [r4, #0]
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFR()) / can_GetAFRMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFR()) / (float)can_GetAFRMultiplier());
  80031c8:	f7fe fea6 	bl	8001f18 <can_GetActualAFR>
  80031cc:	ee08 0a10 	vmov	s16, r0
  80031d0:	f7fe fe9c 	bl	8001f0c <can_GetAFRMultiplier>
@@ -7182,7 +7182,7 @@ void lcd_mainloop(void)
 				sprintf(lcd_q2,"TGT:");
  8003208:	9604      	str	r6, [sp, #16]
  800320a:	6030      	str	r0, [r6, #0]
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFRTGT()) / can_GetAFRTGTMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualAFRTGT()) / (float)can_GetAFRTGTMultiplier());
  800320c:	f7fe fe92 	bl	8001f34 <can_GetActualAFRTGT>
  8003210:	ee08 0a10 	vmov	s16, r0
  8003214:	f7fe fe88 	bl	8001f28 <can_GetAFRTGTMultiplier>
@@ -7210,7 +7210,7 @@ void lcd_mainloop(void)
 				sprintf(lcd_q3,"IGN:");
  800324a:	9705      	str	r7, [sp, #20]
  800324c:	6038      	str	r0, [r7, #0]
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualIgnAdv()) / can_GetIgnAdvMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualIgnAdv()) / (float)can_GetIgnAdvMultiplier());
  800324e:	f7fe fe55 	bl	8001efc <can_GetActualIgnAdv>
  8003252:	ee08 0a10 	vmov	s16, r0
  8003256:	f7fe fe4b 	bl	8001ef0 <can_GetIgnAdvMultiplier>
@@ -7238,7 +7238,7 @@ void lcd_mainloop(void)
  800328e:	7111      	strb	r1, [r2, #4]
 				memcpy(&lcd_q3[4],lcd_tmp_buf,4);
  8003290:	607b      	str	r3, [r7, #4]
-				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualIAT()) / can_GetIATMultiplier());
+				sprintf(lcd_tmp_buf,"%f",((float)can_GetActualIAT()) / (float)can_GetIATMultiplier());
  8003292:	f7fe fe69 	bl	8001f68 <can_GetActualIAT>
  8003296:	ee08 0a10 	vmov	s16, r0
  800329a:	f7fe fe5f 	bl	8001f5c <can_GetIATMultiplier>

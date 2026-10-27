@@ -1,10 +1,11 @@
 import can
 import time
 from datetime import datetime
+import random
 
 # --- Conversion Functions (Mimicking Custom/can_conv_funcs.c) ---
 def can_ConvPercent(inval):
-    return int((inval / 255) * 100)
+    return int((inval * 255) / 100)
 
 def can_ConvAbsoluteMAP(inval):
     return int(inval)
@@ -16,7 +17,7 @@ def can_ConvertRPM(inval):
     return int(inval / 4)
 
 def can_ConvTemp1(inval):
-    return int(inval - 40)
+    return int(inval + 40)
 
 def can_ConvTemp2(inval):
     return int((inval / 10 - 40))
@@ -29,15 +30,15 @@ def can_ConvO2Group3(inval):
     return int(((inval*65536) / 2))
 
 def can_ConvTargetAFR(inval):
-    return int((inval * 2) / 65536)
+    return int((inval * 65536) / 2)
 
 def can_ConvMazdaOilTemp(inval):
-    return int((inval / 100 - 40))
+    return int((inval + 40) * 100)
 
 def can_ConvMazdaAtfTemp(inval):
-    return int((inval / 16 * 10))
+    return int((inval * 16))
 def can_ConvTimingAdvance(inval):
-    return int((inval / 2.0 - 64))
+    return int((inval + 64) * 2.0)
 
 
 # Mapping of PIDs to conversion functions
@@ -62,16 +63,28 @@ PID_CONVERSION_MAP = {
 
 # --- Simulation Values (Raw Input uint32_t) ---
 SIM_VALUES = {
-    0x04: 127, 0x06: 1280, 0x0B: 5000, 0x0C: 2500, 0x0D: 50, 0x0E: 800, 0x11: 127, 0x34: 1.0, 0x3C: 500, 0x44: 32768, 0x45: 127, 0x05: 7276, 0x0F: 27276, 0x2F: 128
+    0x04: 127, 0x06: 1280, 0x0B: 5000, 0x0C: 2500, 0x0D: 50, 0x0E: 80, 0x11: 127, 0x34: 1.0, 0x3C: 500, 0x44: 1.0, 0x45: 127, 0x05: 88, 0x0F: 88, 0x2F: 80
 }
 
 # Simulate Mazda specific PIDs (MAZDA is defined in Custom/includes.h)
-SIM_VALUES[0x1310] = 5000 # Oil Temp (e.g., 90 C)
-SIM_VALUES[0x1E1C] = 8000 # ATF Temp (e.g., 60 C)
+SIM_VALUES[0x1310] = 80 # Oil Temp (e.g., 90 C)
+SIM_VALUES[0x1E1C] = 107 # ATF Temp (e.g., 60 C)
 
 # --- Core Simulation Logic ---
 def simulate_can_message(pid):
-    raw_value = SIM_VALUES.get(pid, 0)
+    # target_obd2_value = SIM_VALUES.get(pid, 0)
+    
+    conv_func = PID_CONVERSION_MAP.get(pid)
+    
+    if conv_func is None:
+        # If no conversion function is defined, return a default 8-byte packet with zeros
+        return [0] * 8 
+
+    # raw_value = SIM_VALUES.get(pid, 0)
+    raw_value = SIM_VALUES[pid]
+    multiplier = float(random.randrange(80,120)/100)
+    # multiplier = random.uniform(0.8, 1.2)
+    fluctuated_raw_value = raw_value * multiplier
     
     conv_func = PID_CONVERSION_MAP.get(pid)
     
@@ -80,7 +93,7 @@ def simulate_can_message(pid):
         return [0] * 8 
 
     # Apply conversion
-    converted_value = conv_func(raw_value)
+    converted_value = conv_func(fluctuated_raw_value)
     # Convert the 16-bit converted value to 2 bytes
     data_bytes = converted_value.to_bytes(2, byteorder='big')
     # print(data_bytes)
@@ -99,7 +112,7 @@ def simulate_can_message(pid):
         pid_bytes = pid.to_bytes(1, byteorder='big')
         txdat = [byte0, byte1] + list(pid_bytes) + list(data_bytes)
     elif mode == 0x22:
-        length = len(data_bytes) + 2
+        length = len(data_bytes) + 3
         byte0 = length
         byte1 = 0x62 # OBD Mode
         pid_bytes = pid.to_bytes(2, byteorder='big')
