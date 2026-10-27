@@ -33,6 +33,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>linked_files/lib-timer.c</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/libs/lib-timer/lib-timer.c</locationURI>
+		</link>
+		<link>
 			<name>linked_files/lib_modbus.c</name>
 			<type>1</type>
 			<locationURI>copy_PROJECT_LOC/libs/lib-modbus/lib_modbus.c</locationURI>

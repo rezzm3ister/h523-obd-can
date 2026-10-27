@@ -55,6 +55,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../Custom"/>
 									<listOptionValue builtIn="false" value="../libs/lib-modbus"/>
+									<listOptionValue builtIn="false" value="../libs/lib-timer"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1263708020" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
