@@ -392,10 +392,10 @@ void can_sendRequest(can_obd_pid_t *h)
     if(HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &can_tx_header, can_tx_data) !=0)
     {
         // Error_Handler();
-        HAL_FDCAN_DeInit(&hfdcan1);
+        // HAL_FDCAN_DeInit(&hfdcan1);
         // __HAL_RCC_FDCAN_FORCE_RESET();
-        HAL_FDCAN_Init(&hfdcan1);
-        can_Init();
+        // HAL_FDCAN_Init(&hfdcan1);
+        // can_Init();
 
     }
 }
@@ -411,24 +411,56 @@ void can_onDataReceived(can_obd_pid_t *h)
     uint8_t len = 0;
     uint8_t data[4];
     bool bad = 0;
+    uint16_t received_pid = 0; // Local variable to store received PID
+    
     //checks if its mode 1 or mode 22
-    if(can_rx_data_buf[1] != 0x41)
+    if(can_rx_data_buf[1] != 0x41) //mode 22
     {
         // if(can_rx_data_buf[2] != h->pid)
         // {
         //     return;
         // }
         len = can_rx_data_buf[0]-3;
+        received_pid = can_rx_data_buf[3] | (can_rx_data_buf[2] << 8);
         memcpy(data, &can_rx_data_buf[4], 4);
     }
-    else
+    else //mode 1
     {
         // if((can_rx_data_buf[2]<<8 | can_rx_data_buf[3]) != h->pid)
         // {
         //     return;
         // }
         len = can_rx_data_buf[0]-2;
+        received_pid = can_rx_data_buf[2];
         memcpy(data, &can_rx_data_buf[3], 4);
+    }
+    if(received_pid != h->pid)
+    {
+        has_data = false;
+        memset(can_rx_data_buf,0,8);
+        // switch(can_state)
+        // {
+        //     case CAN_PROCESSING:
+        //         // pid_idx++;
+        //         can_state = CAN_WRITE;
+        //         // if(pid_idx >= CAN_PID_COUNT_FAST)
+        //         // {
+        //         //     pid_idx = 0;
+        //         //     can_state = CAN_WRITE_SLOW;
+        //         // }
+        //     break;
+        //     case CAN_PROCESSING_SLOW:
+        //         // pid_idx_slow++;
+        //         can_state = CAN_WRITE;
+        //         // if(pid_idx_slow >= CAN_PID_COUNT_SLOW)
+        //         // {
+        //         //     pid_idx_slow = 0;
+        //         // }
+        //     break;
+        //     default:
+        //     break;
+        // }
+        return;
     }
 
     switch(len)
@@ -465,6 +497,29 @@ void can_onDataReceived(can_obd_pid_t *h)
     can_intermessage_timer = Get10kTick();
     has_data = false;
 
+    switch(can_state)
+    {
+        case CAN_PROCESSING:
+            pid_idx++;
+            can_state = CAN_WRITE;
+            if(pid_idx >= CAN_PID_COUNT_FAST)
+            {
+                pid_idx = 0;
+                can_state = CAN_WRITE_SLOW;
+            }
+        break;
+        case CAN_PROCESSING_SLOW:
+            pid_idx_slow++;
+            can_state = CAN_WRITE;
+            if(pid_idx_slow >= CAN_PID_COUNT_SLOW)
+            {
+                pid_idx_slow = 0;
+            }
+        break;
+        default:
+        break;
+    }
+
 }
 
 void can_Init(void)
@@ -500,6 +555,7 @@ void can_1sloop(void)
 
 void can_mainloop(void)
 {
+    
     switch(can_state)
     {
         case CAN_INIT:
@@ -545,13 +601,9 @@ void can_mainloop(void)
         break;
         case CAN_PROCESSING:
             can_onDataReceived(&can_pids_fast[pid_idx]);
-            pid_idx++;
-            can_state = CAN_WRITE;
-            if(pid_idx >= CAN_PID_COUNT_FAST)
-            {
-                pid_idx = 0;
-                can_state = CAN_WRITE_SLOW;
-            }
+            break;
+        case CAN_PROCESSING_SLOW:
+            can_onDataReceived(&can_pids_slow[pid_idx_slow]);
         break;
         case CAN_WRITE_SLOW:
             // if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
@@ -565,7 +617,6 @@ void can_mainloop(void)
             // }
         break;
         case CAN_WAIT_RSP_SLOW:
-            hptim_update(&can_write_timeout_timer);
             
             if(has_data)
             {
@@ -584,15 +635,9 @@ void can_mainloop(void)
                 can_slow_timeouts++;
             }
         break;
-        case CAN_PROCESSING_SLOW:
-            can_onDataReceived(&can_pids_slow[pid_idx_slow]);
-            pid_idx_slow++;
-            if(pid_idx_slow >= CAN_PID_COUNT_SLOW)
-            {
-                pid_idx_slow = 0;
-            }
-            can_state = CAN_WRITE;
-        break;
+        // case CAN_PROCESSING_SLOW:
+        //     can_onDataReceived(&can_pids_slow[pid_idx_slow]);
+        // break;
         case CAN_OFF:
         break;
         default:

@@ -150,9 +150,10 @@ def main():
 
     try:
         while True:
-            rx = bus.recv(0.5)
+            rx = bus.recv(0.0005)
             
             if rx:
+                # time.sleep(0.002)
                 data = list(rx.data)
                 pid = 0
                 
