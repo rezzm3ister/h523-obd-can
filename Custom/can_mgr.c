@@ -61,7 +61,7 @@ volatile can_obd_pid_t can_pids_slow[CAN_PID_COUNT_SLOW] =
 
 //timers
 static HPTim_t can_startup_timer;
-static uint32_t can_write_timeout_timer = 0;
+static HPTim_t can_write_timeout_timer;
 
 static uint32_t can_fast_timeouts = 0;
 static uint32_t can_slow_timeouts = 0;
@@ -470,6 +470,7 @@ void can_onDataReceived(can_obd_pid_t *h)
 void can_Init(void)
 {
     HPTIM_INIT(&can_startup_timer);
+    HPTIM_INIT(&can_write_timeout_timer);
 
     if(HAL_FDCAN_Start(&hfdcan1)!= HAL_OK)
     {
@@ -516,18 +517,20 @@ void can_mainloop(void)
             // if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
             // {
                 can_sendRequest(&can_pids_fast[pid_idx]);
-                can_write_timeout_timer = Get10kTick();
+                hptim_start(&can_write_timeout_timer, CAN_TIMEOUT);
                 can_state = CAN_WAIT_RSP;
             // }
             
         break;
         case CAN_WAIT_RSP:
+            hptim_update(&can_write_timeout_timer);
+
             if(has_data)
             {
                 can_state = CAN_PROCESSING;
                 // has_data = false;
             }
-            else if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
+            else if(HPTIM_IS_EXPIRED(&can_write_timeout_timer))
             {
                 // timeout stuff
                 pid_idx++;
@@ -557,17 +560,19 @@ void can_mainloop(void)
                 
                 can_loop_time = Get10kTick() - last_loop_start;
                 last_loop_start = Get10kTick();
-                can_write_timeout_timer = Get10kTick();
+                hptim_start(&can_write_timeout_timer, CAN_TIMEOUT);
                 can_state = CAN_WAIT_RSP_SLOW;    
             // }
         break;
         case CAN_WAIT_RSP_SLOW:
+            hptim_update(&can_write_timeout_timer);
+            
             if(has_data)
             {
                 can_state = CAN_PROCESSING_SLOW;
                 has_data = false;
             }
-            else if(Get10kTick() - can_write_timeout_timer > CAN_TIMEOUT)
+            else if(HPTIM_IS_EXPIRED(&can_write_timeout_timer))
             {
                 // timeout stuff
                 pid_idx_slow++;
