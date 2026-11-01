@@ -1,7 +1,8 @@
 #include "gpio_mgr.h"
+#include "lib-timer.h"
 
 bool lcd_mode = 0;
-uint32_t lcd_mode_validation = 0;
+HPTim_t lcd_mode_validation_timer;
 gpio_state_t lcd_mode_tfsmv = GPIO_STATE_OFF;
 bool gpio_GetLcdMode(void)
 {
@@ -22,7 +23,7 @@ void gpio_mainloop()
             if(gpio_getRawLcdPin() != 0)
             {
                 lcd_mode_tfsmv = GPIO_STATE_OFF_TO_ON;
-                lcd_mode_validation = Get10kTick();
+                hptim_start(&lcd_mode_validation_timer, LCD_MODE_VALIDATION_TIME);
             }
             break;
         case GPIO_STATE_OFF_TO_ON:
@@ -32,7 +33,8 @@ void gpio_mainloop()
             }
             else
             {
-                if(Get10kTick() - lcd_mode_validation >= LCD_MODE_VALIDATION_TIME)
+                hptim_update(&lcd_mode_validation_timer);
+                if(HPTIM_IS_EXPIRED(&lcd_mode_validation_timer))
                 {
                     lcd_mode_tfsmv = GPIO_STATE_ON;
                 }
@@ -43,7 +45,7 @@ void gpio_mainloop()
             if(gpio_getRawLcdPin() != 1)
             {
                 lcd_mode_tfsmv = GPIO_STATE_ON_TO_OFF;
-                lcd_mode_validation = Get10kTick();
+                hptim_start(&lcd_mode_validation_timer, LCD_MODE_VALIDATION_TIME);
             }
             break;
         case GPIO_STATE_ON_TO_OFF:
@@ -53,12 +55,13 @@ void gpio_mainloop()
             }
             else
             {
-                if(Get10kTick() - lcd_mode_validation >= LCD_MODE_VALIDATION_TIME)
+                hptim_update(&lcd_mode_validation_timer);
+                if(HPTIM_IS_EXPIRED(&lcd_mode_validation_timer))
                 {
                     lcd_mode_tfsmv = GPIO_STATE_OFF;
                 }
             }
-        break;
+            break;
         
     }
 }

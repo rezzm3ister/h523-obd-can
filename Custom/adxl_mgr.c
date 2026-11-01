@@ -1,6 +1,8 @@
 #include "adxl_mgr.h"
 #include "i2c.h"
 #include "usb_mgr.h"
+#include "lib-timer.h"
+
 extern I2C_HandleTypeDef hi2c3;
 
 adxl_state_t adxl_state = ADXL_OFF;
@@ -13,10 +15,11 @@ adxl_init_state_t adxl_init_state = ADXL_INIT_RST;
 bool adxl_alive = 0;
 bool adxl_isBusy = 0;
 static uint32_t adxl_timeouts = 0;
-//timers
-static uint32_t adxl_init_timer = 0;
-static uint32_t adxl_timeout_timer = 0;
-static uint32_t adxl_poll_timer = 0;
+
+//timers - using lib-timer
+static HPTim_t adxl_init_timer;
+static HPTim_t adxl_timeout_timer;
+static HPTim_t adxl_poll_timer;
 
 //data
 volatile static int16_t raw_x;
@@ -102,15 +105,29 @@ void adxl_startWrite(uint8_t reg, uint8_t data)
 
 void adxl_init(void)
 {
+    // Initialize timers
+    HPTIM_INIT(&adxl_init_timer);
+    HPTIM_INIT(&adxl_timeout_timer);
+    HPTIM_INIT(&adxl_poll_timer);
+    
     adxl_startRead(0,1);
     adxl_init_state = ADXL_INIT_RST;
-    adxl_init_timer = Get10kTick();
-    adxl_poll_timer = Get10kTick();
+    hptim_start(&adxl_init_timer, MS_TO_TICKS(1000)); // 1 second timeout
+    hptim_start(&adxl_poll_timer, ADXL_TIMER_INTERVAL); // poll interval
 }   
 
 void adxl_mainloop(void)
 {
-    if(Get10kTick() - adxl_poll_timer < ADXL_TIMER_INTERVAL)
+    hptim_update(&adxl_poll_timer);
+    if(adxl_state == ADXL_OFF)
+    {
+        //do nothing, go straight to the initialization behavior
+    }
+    else if(HPTIM_IS_EXPIRED(&adxl_poll_timer))
+    {
+        hptim_start(&adxl_poll_timer, ADXL_TIMER_INTERVAL);
+    }
+    else
     {
         return;
     }
@@ -123,7 +140,7 @@ void adxl_mainloop(void)
                 adxl_init_state = ADXL_INIT_RST;
 
             }
-            if((Get10kTick() - adxl_init_timer) > 10000)
+            if(HPTIM_IS_EXPIRED(&adxl_init_timer))
             {
                 adxl_init();
             }
@@ -154,13 +171,13 @@ void adxl_mainloop(void)
             }
         break;
         case ADXL_TX:
-            adxl_timeout_timer = Get10kTick();
+            hptim_start(&adxl_timeout_timer, MS_TO_TICKS(5)); // 5 second timeout
             adxl_isBusy = 1;
             adxl_startRead(0x32,0x6);
             adxl_state = ADXL_RX;
         break;
         case ADXL_RX:
-            if(Get10kTick() - adxl_timeout_timer > 5000)
+            if(HPTIM_IS_EXPIRED(&adxl_timeout_timer))
             {
                 adxl_timeouts++;
                 adxl_state = ADXL_TX;
@@ -169,6 +186,4 @@ void adxl_mainloop(void)
         default:
         break;
     }
-    adxl_poll_timer = Get10kTick();
-
 }
