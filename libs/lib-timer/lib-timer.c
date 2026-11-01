@@ -49,7 +49,7 @@ void hptim_update(HPTim_t *timer) {
 void hptim_stop(HPTim_t *timer) {
     timer->set_time = 0;
     timer->end_time = 0;
-    timer->status = HPTIM_EXPIRED; 
+    timer->status = HPTIM_OFF; 
 }
 
 /**

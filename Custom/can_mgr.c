@@ -601,9 +601,34 @@ void can_mainloop(void)
         break;
         case CAN_PROCESSING:
             can_onDataReceived(&can_pids_fast[pid_idx]);
+            hptim_update(&can_write_timeout_timer);
+            if(HPTIM_IS_EXPIRED(&can_write_timeout_timer))
+            {
+                // timeout stuff
+                pid_idx++;
+                can_state = CAN_WRITE;
+                if(pid_idx >= CAN_PID_COUNT_FAST)
+                {
+                    pid_idx = 0;
+                    can_state = CAN_WRITE_SLOW;
+                }
+                can_fast_timeouts++;
+            }
             break;
         case CAN_PROCESSING_SLOW:
             can_onDataReceived(&can_pids_slow[pid_idx_slow]);
+            hptim_update(&can_write_timeout_timer);
+            if(HPTIM_IS_EXPIRED(&can_write_timeout_timer))
+            {
+                // timeout stuff
+                pid_idx_slow++;
+                can_state = CAN_WRITE;
+                if(pid_idx_slow >= CAN_PID_COUNT_SLOW)
+                {
+                    pid_idx_slow = 0;
+                }
+                can_slow_timeouts++;
+            }
         break;
         case CAN_WRITE_SLOW:
             // if(Get10kTick() - can_intermessage_timer > CAN_INTERMESSAGE_TIME)
