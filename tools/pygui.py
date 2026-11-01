@@ -206,10 +206,10 @@ class ModbThread(QThread):
         #groups of registers that use the same formulas
 
         group1x = [0x0B, 0x0C, 0x0D, 0x3C]
-        group10x = []
-        group100x = [0x04, 0x05, 0x06, 0x0E, 0x0F, 0x11, 0x2F, 0x44, 0x45]
-        group1000x = [0x34]
-        group1000div = [0x105,0x106,0x107,0x108,0x109]
+        group10x = [0x110, 0x111]
+        group100x = [0x04, 0x05, 0x06, 0x0E, 0x0F, 0x11, 0x2F,0x34, 0x44, 0x45]
+        group1000x = [0x105,0x106,0x107,0x108,0x109]
+        # group1000div = 
 
         val = 0
 
@@ -220,13 +220,13 @@ class ModbThread(QThread):
                 # if(val>32767): val = 32767-val
 
                 if i in group10x:
-                    val *= 10
+                    val /= 10
                 elif i in group100x:
-                    val *= 100
+                    val /= 100
                 elif i in group1000x:
-                    val *= 1000
-                elif i in group1000div:
                     val /= 1000
+                # elif i in group1000div:
+                #     val *= 1000
 
             else:
                 val = 0

@@ -14,16 +14,16 @@ def can_ConvVehicleSpeed(inval):
     return int(inval)
 
 def can_ConvertRPM(inval):
-    return int(inval / 4)
+    return int(inval * 4)
 
 def can_ConvTemp1(inval):
     return int(inval + 40)
 
 def can_ConvTemp2(inval):
-    return int((inval / 10 - 40))
+    return int(((inval+40) * 10))
 
 def can_ConvFuelTrim(inval):
-    return int((inval / 1.28 - 100))
+    return int(((inval+100) * 1.28))
 
 def can_ConvO2Group3(inval):
     # return int(((inval/65536) * 2))
@@ -97,7 +97,7 @@ def simulate_can_message(pid):
     # Convert the 16-bit converted value to 2 bytes
     data_bytes = converted_value.to_bytes(2, byteorder='big')
     # print(data_bytes)
-    print(pid,converted_value,list(data_bytes))
+    print(hex(pid),converted_value,list(data_bytes))
 
     mode = 1
     if pid in [0x1310, 0x1E1C]:
