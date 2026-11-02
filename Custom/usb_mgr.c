@@ -8,7 +8,7 @@ uint8_t TxBufferLen = sizeof(TxBuffer);
 uint8_t rx_buf[300];
 uint16_t rx_len;
 uint8_t tx_buf[300];
-bool has_rx=0;
+volatile bool has_rx=0;
 
 uint16_t modb_db[MODB_SIZE];
 
@@ -56,6 +56,7 @@ void inc_modb_crc_error_count(void)
 void usb_OnDataReceived(void)
 {
     // Initialize buffers to zero
+    memset(tx_buf, 0, sizeof(tx_buf));
     
     if(rx_buf[0]!=MODB_ADDR) return;
     HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,1);
@@ -70,47 +71,73 @@ void usb_OnDataReceived(void)
     
     uint16_t reg_addr = (rx_buf[2]<<8) | rx_buf[3];
     uint16_t payload_len = (rx_buf[4]<<8) | rx_buf[5];
+    
+    // Check for invalid register address
+    if (reg_addr >= MODB_SIZE) {
+        // Send Modbus exception response: Illegal Address
+        tx_buf[0] = MODB_ADDR;
+        tx_buf[1] = rx_buf[1] | 0x80;  // Exception code = original func + 0x80
+        tx_buf[2] = 0x02;               // Exception code: Illegal Address
+        uint16_t rsp_len = 3;
+        
+        uint16_t crc = crc_modbus(tx_buf, rsp_len);
+        tx_buf[rsp_len] = crc & 0xff;
+        tx_buf[rsp_len+1] = crc >> 8;
+        
+        CDC_Transmit_FS(tx_buf, rsp_len + 2);
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,0);
+        return;
+    }
+    
     uint8_t r_buf[300];
-    memset(tx_buf, 0, sizeof(tx_buf));
     memset(r_buf, 0, sizeof(r_buf));
+    
     uint16_t rsp_len = 3 + payload_len*2;
-    // memcpy(w_payload,rx_buf,(payload_len*2));
-    tx_buf[0]=MODB_ADDR;
-    tx_buf[1]=rx_buf[1];
-    // uart_testwrite();
+    
+    tx_buf[0] = MODB_ADDR;
+    tx_buf[1] = rx_buf[1];
+    
     //do r/w functions
     switch(rx_buf[1])
     {
         case MODB_READ:
         case MODB_READ2:
-            modbus_read(&modb_db[reg_addr],r_buf,payload_len);
-            // HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,0);
-            tx_buf[2]=payload_len*2;
-            memcpy(&tx_buf[3],r_buf,payload_len*2);
-
+            modbus_read(&modb_db[reg_addr], r_buf, payload_len);
+            tx_buf[2] = payload_len*2;
+            memcpy(&tx_buf[3], r_buf, payload_len*2);
             break;
         case MODB_WRITE:
-            memcpy(&tx_buf[0],&rx_buf[0],6);
-            modbus_write(&modb_db[reg_addr],&rx_buf[4],1);
-            rsp_len=6;
+            memcpy(&tx_buf[0], &rx_buf[0], 6);
+            modbus_write(&modb_db[reg_addr], &rx_buf[4], 1);
+            rsp_len = 6;
             break;
         case MODB_WRITEMULT:
-            // memcpy(w_payload,&rx_buf[7],rx_buf[6]);
-            modbus_write(&modb_db[reg_addr],&rx_buf[7],payload_len);
-            memcpy(&tx_buf[2],&rx_buf[2],4);
-            rsp_len=6;
+            modbus_write(&modb_db[reg_addr], &rx_buf[7], payload_len);
+            memcpy(&tx_buf[2], &rx_buf[2], 4);
+            rsp_len = 6;
             break;
         default:
-            break;
+            // Send Modbus exception response: Illegal Function
+            tx_buf[0] = MODB_ADDR;
+            tx_buf[1] = rx_buf[1] | 0x80;  // Exception code = original func + 0x80
+            tx_buf[2] = 0x01;               // Exception code: Illegal Function
+            rsp_len = 3;
+            
+            uint16_t crc = crc_modbus(tx_buf, rsp_len);
+            tx_buf[rsp_len] = crc & 0xff;
+            tx_buf[rsp_len+1] = crc >> 8;
+            
+            CDC_Transmit_FS(tx_buf, rsp_len + 2);
+            HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,0);
+            return;
     }
     
-    uint16_t crc=0;
-
-    crc=crc_modbus(tx_buf,rsp_len);
-    tx_buf[rsp_len]=crc&0xff;
-    tx_buf[rsp_len+1]=crc>>8;
+    uint16_t crc = 0;
+    crc = crc_modbus(tx_buf, rsp_len);
+    tx_buf[rsp_len] = crc & 0xff;
+    tx_buf[rsp_len+1] = crc >> 8;
     // HAL_UART_Transmit_DMA(&huart1,tx_buf,rsp_len+2);
-    CDC_Transmit_FS(tx_buf, rsp_len+2);
+    CDC_Transmit_FS(tx_buf, rsp_len + 2);
     HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,0);
 
 }
