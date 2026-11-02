@@ -12,14 +12,67 @@ bool has_rx=0;
 
 uint16_t modb_db[MODB_SIZE];
 
+// Modbus CRC error counter (static to this file)
+static uint32_t modb_crc_error_count = 0;
+
+/**
+ * @brief Check CRC for incoming Modbus request
+ * @param rx_buf: Received buffer (must contain at least 8 bytes: addr, func, 2x reg, 2x len, data, crc)
+ * @param len: Length of received data
+ * @return true if CRC is valid, false otherwise
+ */
+bool check_crc_modbus(uint8_t *rx_buf, uint16_t len)
+{
+    if (len < 8) {
+        return false; // Request too short for CRC check
+    }
+    
+    // Calculate CRC over all bytes except the last 2 (which is the received CRC)
+    uint16_t crc = crc_modbus(rx_buf, len - 2);
+    
+    // Received CRC is stored in little-endian format (LSB first)
+    uint16_t received_crc = rx_buf[len - 2] | (rx_buf[len - 1] << 8);
+    
+    return (crc == received_crc);
+}
+
+/**
+ * @brief Get the current Modbus CRC error count
+ * @return uint32_t: Current CRC error counter value
+ */
+uint32_t get_modb_crc_error_count(void)
+{
+    return modb_crc_error_count;
+}
+
+/**
+ * @brief Increment the Modbus CRC error counter
+ */
+void inc_modb_crc_error_count(void)
+{
+    modb_crc_error_count++;
+}
+
 void usb_OnDataReceived(void)
 {
+    // Initialize buffers to zero
+    
     if(rx_buf[0]!=MODB_ADDR) return;
     HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,1);
-    //add crc check here
+    
+    // Check CRC validity
+    if (!check_crc_modbus(rx_buf, rx_len)) {
+        // CRC mismatch - increment error counter and ignore request
+        inc_modb_crc_error_count();
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,0);
+        return;
+    }
+    
     uint16_t reg_addr = (rx_buf[2]<<8) | rx_buf[3];
     uint16_t payload_len = (rx_buf[4]<<8) | rx_buf[5];
     uint8_t r_buf[300];
+    memset(tx_buf, 0, sizeof(tx_buf));
+    memset(r_buf, 0, sizeof(r_buf));
     uint16_t rsp_len = 3 + payload_len*2;
     // memcpy(w_payload,rx_buf,(payload_len*2));
     tx_buf[0]=MODB_ADDR;
